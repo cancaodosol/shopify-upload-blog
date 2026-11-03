@@ -168,28 +168,19 @@ async function registerImage(creds, resourceUrl, alt) {
   throw new HttpError(504, "画像の処理がタイムアウトしました");
 }
 
-// プレーンテキスト → HTML。空行で段落を分け、段落内の改行は <br> にする。
-function textToHtml(text) {
-  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  return text
-    .replace(/\r\n?/g, "\n")
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`)
-    .join("\n");
-}
+// 本文は画面のエディタ（TinyMCE）が作った HTML。タグと空白を除いて中身があるかを見る。
+const hasText = (html) => Boolean(String(html || "").replace(/<[^>]*>/g, "").replace(/&nbsp;|\s/g, ""));
 
 async function createArticle(creds, { blogId, title, body, author, isPublished, imageResourceUrl }) {
   if (!blogId) throw new HttpError(400, "ブログを選択してください");
   if (!title?.trim()) throw new HttpError(400, "タイトルを入力してください");
-  if (!body?.trim()) throw new HttpError(400, "本文を入力してください");
+  if (!hasText(body)) throw new HttpError(400, "本文を入力してください");
   if (!imageResourceUrl) throw new HttpError(400, "サムネイル画像を選択してください");
 
   const article = {
     blogId,
     title: title.trim(),
-    body: textToHtml(body),
+    body,
     author: { name: author?.trim() || "ゆにわマート" },
     isPublished: Boolean(isPublished),
   };

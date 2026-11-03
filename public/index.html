@@ -118,6 +118,7 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
 }
 [hidden] { display: none !important; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/tinymce@8.9.3/tinymce.min.js"></script>
 </head>
 <body>
 <header class="top wrap">
@@ -176,7 +177,7 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
     </div>
     <div class="field">
       <label for="body">本文<span class="req">必須</span></label>
-      <textarea id="body" placeholder="空行で段落が分かれます。"></textarea>
+      <textarea id="body"></textarea>
       <div class="count" id="bodyCount">0 文字</div>
     </div>
     <div class="row">
@@ -318,9 +319,27 @@ async function loadRecent() {
   }
 }
 
-// ---------- 本文の文字数 ----------
-$("body").addEventListener("input", () => {
-  $("bodyCount").textContent = `${$("body").value.length.toLocaleString()} 文字`;
+// ---------- 本文エディタ（TinyMCE） ----------
+const bodyText = () => tinymce.get("body")?.getContent({ format: "text" }).trim() || "";
+const updateCount = () => { $("bodyCount").textContent = `${bodyText().length.toLocaleString()} 文字`; };
+const dark = document.documentElement.dataset.theme === "dark"
+  || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+tinymce.init({
+  selector: "#body",
+  license_key: "gpl",
+  language: "ja",
+  language_url: "https://cdn.jsdelivr.net/npm/tinymce-i18n@26.9.28/langs8/ja.js",
+  plugins: "link",
+  toolbar: "undo redo | bold | link",
+  menubar: false,
+  statusbar: false,
+  height: 360,
+  placeholder: "Enter で段落、Shift + Enter で段落内の改行になります。",
+  convert_urls: false, // リンクを相対パスに書き換えず、入力した URL のまま保存する
+  skin: dark ? "oxide-dark" : "oxide",
+  content_css: dark ? "dark" : "default",
+  content_style: "body { font-family: 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif; font-size: 15px; line-height: 1.8; }",
+  setup: (editor) => editor.on("input change undo redo SetContent", updateCount),
 });
 
 // ---------- サムネイル ----------
@@ -382,11 +401,11 @@ function showResult(ok, html) {
 $("postForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = $("title").value.trim();
-  const body = $("body").value;
+  const body = tinymce.get("body").getContent();
   if (!connected) return showResult(false, "先に接続してください");
   if (!thumbFile) { $("drop").focus(); return showResult(false, "サムネイル画像を選択してください"); }
   if (!title) { $("title").focus(); return showResult(false, "タイトルを入力してください"); }
-  if (!body.trim()) { $("body").focus(); return showResult(false, "本文を入力してください"); }
+  if (!bodyText()) { tinymce.get("body").focus(); return showResult(false, "本文を入力してください"); }
 
   const publish = $("publish").checked;
   if (!confirm(`「${title}」を${publish ? "公開状態" : "非公開（下書き）"}で投稿します。よろしいですか？`)) return;
@@ -407,8 +426,7 @@ $("postForm").addEventListener("submit", async (e) => {
     if (article.storefrontUrl) links.push(`<li><a href="${escapeHtml(article.storefrontUrl)}" target="_blank" rel="noopener">ストアで表示</a></li>`);
     showResult(true, `<b>投稿しました</b>：${escapeHtml(article.title)}（${article.isPublished ? "公開" : "非公開"}）<ul>${links.join("")}</ul>`);
     $("title").value = "";
-    $("body").value = "";
-    $("bodyCount").textContent = "0 文字";
+    tinymce.get("body").setContent("");
     $("publish").checked = false;
     setThumb(null);
     loadRecent();
