@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ゆにわ ブログ投稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho:wght@500;600&display=swap">
+<style>
+/* ヘッダー → 接続設定パネル → 投稿フォームパネル → 結果 */
+:root {
+  --bg: #f6f7f4;
+  --panel: #ffffff;
+  --fg: #1d2420;
+  --muted: #66706a;
+  --line: #dfe3dd;
+  --accent: #2f6b4f;
+  --accent-fg: #ffffff;
+  --ok: #2f7d4f;
+  --bad: #b3372b;
+  --font-display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --radius: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141816; --panel: #1c211e; --fg: #e8ece9; --muted: #9aa49e; --line: #2d3430;
+    --accent: #7cc4a0; --accent-fg: #10231a; --ok: #6cc893; --bad: #ef7b6e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1c211e; --fg: #e8ece9; --muted: #9aa49e; --line: #2d3430;
+  --accent: #7cc4a0; --accent-fg: #10231a; --ok: #6cc893; --bad: #ef7b6e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+}
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header.top { padding-block: 40px 20px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--muted); margin: 0; }
+h1 {
+  font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 4vw, 36px);
+  margin: 6px 0 0; text-wrap: balance; letter-spacing: .02em;
+}
+.lead { margin: 10px 0 0; max-width: 62ch; color: var(--muted); }
+
+main { padding-block: 8px 56px; display: flex; flex-direction: column; gap: 20px; }
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px; display: flex; flex-direction: column; gap: 16px;
+}
+.panel h2 {
+  margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.panel h2 .status { font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+.status.ok { color: var(--ok); }
+.status.bad { color: var(--bad); }
+.status.muted { color: var(--muted); }
+
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label, .field .label { font-size: 13px; font-weight: 700; }
+.field .req { color: var(--bad); font-weight: 500; margin-left: 4px; font-size: 12px; }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+.row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+
+input[type="text"], input[type="password"], select, textarea {
+  font: inherit; font-size: 15px; padding: 9px 12px; border-radius: 8px; width: 100%;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg); min-width: 0;
+}
+textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
+.count { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+.btn {
+  font: inherit; font-size: 14px; font-weight: 700; padding: 9px 20px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--accent-fg);
+}
+.btn.sub { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+.drop {
+  border: 1.5px dashed var(--line); border-radius: 10px; padding: 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 16px; background: var(--bg);
+}
+.drop.over { border-color: var(--accent); }
+.drop img { width: 120px; height: 80px; object-fit: cover; border-radius: 6px; display: block; background: var(--line); }
+.drop .drop-text { font-size: 14px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.drop-clear { font: inherit; font-size: 12px; background: none; border: 0; color: var(--bad); cursor: pointer; padding: 0; margin-left: auto; }
+
+.result { border-radius: 10px; padding: 14px 16px; font-size: 14px; overflow-wrap: anywhere; }
+.result.ok { border: 1px solid var(--ok); color: var(--fg); }
+.result.bad { border: 1px solid var(--bad); color: var(--bad); }
+.result a { color: var(--accent); }
+.result ul { margin: 6px 0 0; padding-left: 1.2em; }
+
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .drop:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <p class="eyebrow">ゆにわマートオンライン</p>
+  <h1>Shopify ブログ投稿</h1>
+  <p class="lead">タイトル・本文・サムネイル画像を入力して、Shopify のブログに記事を投稿します。</p>
+</header>
+
+<main class="wrap">
+  <!-- 接続設定 -->
+  <section class="panel" aria-labelledby="conn-title">
+    <h2 id="conn-title">接続設定 <span id="connStatus" class="status muted">未接続</span></h2>
+    <div class="field">
+      <label for="shop">ストアドメイン<span class="req">必須</span></label>
+      <input type="text" id="shop" placeholder="example.myshopify.com" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="clientId">Client ID<span class="req">必須</span></label>
+        <input type="text" id="clientId" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="clientSecret">Client Secret<span class="req">必須</span></label>
+        <input type="password" id="clientSecret" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <p class="hint">入力内容はこのタブを閉じると消えます（タブ内でのみ一時保存）。</p>
+    <div class="actions">
+      <button type="button" class="btn sub" id="connectBtn">接続してブログを読み込む</button>
+    </div>
+  </section>
+
+  <!-- 投稿フォーム -->
+  <form class="panel" id="postForm" aria-labelledby="post-title" novalidate>
+    <h2 id="post-title">記事</h2>
+    <div class="field">
+      <label for="blog">投稿先ブログ<span class="req">必須</span></label>
+      <select id="blog" disabled><option value="">先に接続してください</option></select>
+    </div>
+    <div class="field">
+      <label for="title">タイトル<span class="req">必須</span></label>
+      <input type="text" id="title" maxlength="255">
+    </div>
+    <div class="field">
+      <label for="body">本文<span class="req">必須</span></label>
+      <textarea id="body" placeholder="空行で段落が分かれます。"></textarea>
+      <div class="count" id="bodyCount">0 文字</div>
+    </div>
+    <div class="field">
+      <span class="label" id="thumbLabel">サムネイル画像</span>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-labelledby="thumbLabel">
+        <img id="thumbPreview" alt="" hidden>
+        <span class="drop-text" id="thumbText">クリックまたはドラッグ＆ドロップで画像を選択（JPEG / PNG / WebP / GIF）</span>
+        <button type="button" class="drop-clear" id="thumbClear" hidden>削除</button>
+      </div>
+      <input type="file" id="thumb" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="author">投稿者名</label>
+        <input type="text" id="author" value="ゆにわマート">
+      </div>
+    </div>
+    <div class="actions">
+      <label class="check"><input type="checkbox" id="publish"> すぐに公開する</label>
+      <button type="submit" class="btn" id="submitBtn" disabled>投稿する</button>
+    </div>
+    <div id="result" role="status" aria-live="polite" hidden></div>
+  </form>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const CRED_KEYS = ["shop", "clientId", "clientSecret"];
+const MAX_IMAGE = 20 * 1024 * 1024; // Shopify の画像ファイル上限
+let thumbFile = null;
+let connected = false;
+
+// ---------- 接続情報（sessionStorage にのみ一時保存） ----------
+function store(fn) { try { return fn(sessionStorage); } catch { return null; } }
+for (const k of CRED_KEYS) {
+  $(k).value = store((s) => s.getItem("cred." + k)) || "";
+  $(k).addEventListener("input", () => {
+    store((s) => s.setItem("cred." + k, $(k).value));
+    if (connected) setConnected(false, "接続情報が変更されました。再接続してください");
+  });
+}
+function credHeaders() {
+  return {
+    "X-Shop-Domain": $("shop").value.trim(),
+    "X-Client-Id": $("clientId").value.trim(),
+    "X-Client-Secret": $("clientSecret").value.trim(),
+  };
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, { ...options, headers: { ...credHeaders(), ...(options.headers || {}) } });
+  const json = await res.json().catch(() => ({ error: `サーバーから不正な応答がありました（${res.status}）` }));
+  if (!res.ok) throw new Error(json.error || `エラー（${res.status}）`);
+  return json;
+}
+
+function setConnected(ok, message) {
+  connected = ok;
+  $("connStatus").textContent = message;
+  $("connStatus").className = "status " + (ok ? "ok" : message === "未接続" ? "muted" : "bad");
+  $("blog").disabled = !ok;
+  $("submitBtn").disabled = !ok;
+  if (!ok) $("blog").innerHTML = '<option value="">先に接続してください</option>';
+}
+
+$("connectBtn").addEventListener("click", async () => {
+  if (location.protocol === "file:") {
+    setConnected(false, "公開先の URL か、server.js を起動して http://localhost:3939 から開いてください");
+    return;
+  }
+  $("connectBtn").disabled = true;
+  $("connStatus").textContent = "接続中…";
+  $("connStatus").className = "status muted";
+  try {
+    const { blogs } = await api("/api/blogs");
+    if (!blogs.length) throw new Error("ブログが見つかりません。Shopify 管理画面でブログを作成してください");
+    const sel = $("blog");
+    const prev = store((s) => s.getItem("blogId"));
+    sel.innerHTML = "";
+    for (const b of blogs) sel.add(new Option(`${b.title}（${b.handle}）`, b.id));
+    if (prev && blogs.some((b) => b.id === prev)) sel.value = prev;
+    setConnected(true, `接続済み（ブログ ${blogs.length} 件）`);
+    sel.disabled = false;
+  } catch (err) {
+    setConnected(false, err.message);
+  } finally {
+    $("connectBtn").disabled = false;
+  }
+});
+$("blog").addEventListener("change", () => store((s) => s.setItem("blogId", $("blog").value)));
+
+// ---------- 本文の文字数 ----------
+$("body").addEventListener("input", () => {
+  $("bodyCount").textContent = `${$("body").value.length.toLocaleString()} 文字`;
+});
+
+// ---------- サムネイル ----------
+function setThumb(file) {
+  if (file && !file.type.startsWith("image/")) { showResult(false, "画像ファイルを選択してください"); return; }
+  if (file && file.size > MAX_IMAGE) { showResult(false, "画像は 20MB 以下にしてください"); return; }
+  thumbFile = file || null;
+  const img = $("thumbPreview");
+  if (img.src) URL.revokeObjectURL(img.src);
+  if (thumbFile) {
+    img.src = URL.createObjectURL(thumbFile);
+    img.hidden = false;
+    $("thumbText").textContent = `${thumbFile.name}（${Math.ceil(thumbFile.size / 1024).toLocaleString()} KB）`;
+    $("thumbClear").hidden = false;
+  } else {
+    img.removeAttribute("src");
+    img.hidden = true;
+    $("thumbText").textContent = "クリックまたはドラッグ＆ドロップで画像を選択（JPEG / PNG / WebP / GIF）";
+    $("thumbClear").hidden = true;
+    $("thumb").value = "";
+  }
+}
+const drop = $("drop");
+drop.addEventListener("click", (e) => { if (e.target !== $("thumbClear")) $("thumb").click(); });
+drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("thumb").click(); } });
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); setThumb(e.dataTransfer.files[0]); });
+$("thumb").addEventListener("change", () => setThumb($("thumb").files[0]));
+$("thumbClear").addEventListener("click", (e) => { e.stopPropagation(); setThumb(null); });
+
+// アップロード先を発行してもらい、画像本体はブラウザから Shopify の保存先へ直接送る
+async function uploadThumb(file) {
+  const { target } = await api("/api/staged-uploads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, mimeType: file.type, fileSize: file.size }),
+  });
+  const form = new FormData();
+  for (const p of target.parameters) form.append(p.name, p.value);
+  form.append("file", file);
+  const res = await fetch(target.url, { method: "POST", body: form }).catch(() => null);
+  if (!res || !res.ok) throw new Error(`画像のアップロードに失敗しました${res ? `（${res.status}）` : ""}`);
+  return target.resourceUrl;
+}
+
+// ---------- 結果表示 ----------
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function showResult(ok, html) {
+  const el = $("result");
+  el.hidden = false;
+  el.className = "result " + (ok ? "ok" : "bad");
+  el.innerHTML = ok ? html : escapeHtml(html);
+}
+
+// ---------- 投稿 ----------
+$("postForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = $("title").value.trim();
+  const body = $("body").value;
+  if (!connected) return showResult(false, "先に接続してください");
+  if (!title) { $("title").focus(); return showResult(false, "タイトルを入力してください"); }
+  if (!body.trim()) { $("body").focus(); return showResult(false, "本文を入力してください"); }
+
+  const publish = $("publish").checked;
+  if (!confirm(`「${title}」を${publish ? "公開状態" : "非公開（下書き）"}で投稿します。よろしいですか？`)) return;
+
+  const btn = $("submitBtn");
+  btn.disabled = true;
+  btn.textContent = thumbFile ? "画像をアップロード中…" : "投稿中…";
+  $("result").hidden = true;
+  try {
+    const imageResourceUrl = thumbFile ? await uploadThumb(thumbFile) : null;
+    btn.textContent = "投稿中…";
+    const { article } = await api("/api/articles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ blogId: $("blog").value, title, body, author: $("author").value, isPublished: publish, imageResourceUrl }),
+    });
+    const links = [`<li><a href="${escapeHtml(article.adminUrl)}" target="_blank" rel="noopener">管理画面で開く</a></li>`];
+    if (article.storefrontUrl) links.push(`<li><a href="${escapeHtml(article.storefrontUrl)}" target="_blank" rel="noopener">ストアで表示</a></li>`);
+    showResult(true, `<b>投稿しました</b>：${escapeHtml(article.title)}（${article.isPublished ? "公開" : "非公開"}）<ul>${links.join("")}</ul>`);
+    $("title").value = "";
+    $("body").value = "";
+    $("bodyCount").textContent = "0 文字";
+    $("publish").checked = false;
+    setThumb(null);
+  } catch (err) {
+    showResult(false, err.message);
+  } finally {
+    btn.disabled = !connected;
+    btn.textContent = "投稿する";
+  }
+});
+</script>
+</body>
+</html>
