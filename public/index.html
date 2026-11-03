@@ -152,15 +152,6 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
       <select id="blog" disabled><option value="">先に接続してください</option></select>
     </div>
     <div class="field">
-      <label for="title">タイトル<span class="req">必須</span></label>
-      <input type="text" id="title" maxlength="255">
-    </div>
-    <div class="field">
-      <label for="body">本文<span class="req">必須</span></label>
-      <textarea id="body" placeholder="空行で段落が分かれます。"></textarea>
-      <div class="count" id="bodyCount">0 文字</div>
-    </div>
-    <div class="field">
       <span class="label" id="thumbLabel">サムネイル画像</span>
       <div class="drop" id="drop" tabindex="0" role="button" aria-labelledby="thumbLabel">
         <img id="thumbPreview" alt="" hidden>
@@ -168,6 +159,15 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
         <button type="button" class="drop-clear" id="thumbClear" hidden>削除</button>
       </div>
       <input type="file" id="thumb" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+    </div>
+    <div class="field">
+      <label for="title">タイトル<span class="req">必須</span></label>
+      <input type="text" id="title" maxlength="255">
+    </div>
+    <div class="field">
+      <label for="body">本文<span class="req">必須</span></label>
+      <textarea id="body" placeholder="空行で段落が分かれます。"></textarea>
+      <div class="count" id="bodyCount">0 文字</div>
     </div>
     <div class="row">
       <div class="field">
