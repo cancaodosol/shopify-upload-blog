@@ -78,6 +78,47 @@ async function listBlogs(creds) {
   return data.blogs.nodes;
 }
 
+// 指定ブログの新しい記事から、サムネイル付きのものを最大5件返す（下書きも含む）。
+async function listRecentArticles(creds, { blogId }) {
+  const id = /^gid:\/\/shopify\/Blog\/(\d+)$/.exec(blogId || "")?.[1];
+  if (!id) throw new HttpError(400, "ブログの指定が不正です");
+  const data = await gql(
+    creds,
+    `query($q: String!) {
+      articles(first: 15, sortKey: ID, reverse: true, query: $q) {
+        nodes { id title isPublished image { url altText } }
+      }
+    }`,
+    { q: `blog_id:${id}` }
+  );
+  return data.articles.nodes
+    .filter((a) => a.image?.url)
+    .slice(0, 5)
+    .map((a) => ({
+      title: a.title,
+      isPublished: a.isPublished,
+      imageUrl: a.image.url,
+      adminUrl: `https://${creds.shop}/admin/articles/${a.id.split("/").pop()}`,
+    }));
+}
+
+// ストア名とロゴ（管理画面「設定 → ブランド」のロゴ）。ロゴは Storefront API にしかないため、
+// トークン不要のアクセスで取得する。表示用の補助情報なので、失敗しても null を返すだけにする。
+async function getShopInfo(creds) {
+  try {
+    const res = await fetch(`https://${creds.shop}/api/${creds.apiVersion}/graphql.json`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: `{ shop { name brand { logo { image { url } } squareLogo { image { url } } } } }` }),
+    });
+    const shop = (await res.json()).data?.shop;
+    if (!shop) return null;
+    return { name: shop.name, logoUrl: shop.brand?.logo?.image?.url || shop.brand?.squareLogo?.image?.url || null };
+  } catch {
+    return null;
+  }
+}
+
 // 画像のアップロード先を発行する。ファイル本体はブラウザから直接この URL へ送る
 // （中継サーバーを経由させないことで、Workers の CPU 時間・リクエストサイズ制限を避ける）。
 async function createStagedUpload(creds, { filename, mimeType, fileSize }) {
@@ -179,11 +220,17 @@ export async function handleApi({ method, pathname, getHeader, readJson, apiVers
   if (!pathname.startsWith("/api/")) return null;
   try {
     if (method === "GET" && pathname === "/api/blogs") {
-      return { status: 200, body: { blogs: await listBlogs(readCredentials(getHeader, apiVersion)) } };
+      const creds = readCredentials(getHeader, apiVersion);
+      const [blogs, shop] = await Promise.all([listBlogs(creds), getShopInfo(creds)]);
+      return { status: 200, body: { blogs, shop } };
     }
     if (method === "POST" && pathname === "/api/staged-uploads") {
       const creds = readCredentials(getHeader, apiVersion);
       return { status: 200, body: { target: await createStagedUpload(creds, await readJson()) } };
+    }
+    if (method === "POST" && pathname === "/api/recent-articles") {
+      const creds = readCredentials(getHeader, apiVersion);
+      return { status: 200, body: { articles: await listRecentArticles(creds, await readJson()) } };
     }
     if (method === "POST" && pathname === "/api/articles") {
       const creds = readCredentials(getHeader, apiVersion);

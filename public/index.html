@@ -54,6 +54,12 @@ h1 {
   margin: 6px 0 0; text-wrap: balance; letter-spacing: .02em;
 }
 .lead { margin: 10px 0 0; max-width: 62ch; color: var(--muted); }
+.shop { display: flex; align-items: center; gap: 10px; margin-top: 16px; color: var(--muted); font-size: 14px; }
+.shop img { max-height: 40px; max-width: 160px; object-fit: contain; }
+.shop b { color: var(--fg); font-weight: 700; }
+.recent { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.recent a { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); }
+.recent img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
 
 main { padding-block: 8px 56px; display: flex; flex-direction: column; gap: 20px; }
 .panel {
@@ -117,7 +123,11 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
 <header class="top wrap">
   <p class="eyebrow">ゆにわマートオンライン</p>
   <h1>Shopify ブログ投稿</h1>
-  <p class="lead">タイトル・本文・サムネイル画像を入力して、Shopify のブログに記事を投稿します。</p>
+  <div class="shop" id="shopBadge" hidden>
+    <img id="shopLogo" alt="" hidden>
+    <span>接続先：<b id="shopName"></b></span>
+  </div>
+  <ul class="recent" id="recent" aria-label="本日のゆにわマート の最近の記事" hidden></ul>
 </header>
 
 <main class="wrap">
@@ -236,6 +246,7 @@ function setConnected(ok, message) {
   $("blog").disabled = !ok;
   $("submitBtn").disabled = !ok;
   if (!ok) $("blog").innerHTML = '<option value="">先に接続してください</option>';
+  if (!ok) { $("shopBadge").hidden = true; $("recent").hidden = true; }
 }
 
 $("connectBtn").addEventListener("click", async () => {
@@ -247,7 +258,7 @@ $("connectBtn").addEventListener("click", async () => {
   $("connStatus").textContent = "接続中…";
   $("connStatus").className = "status muted";
   try {
-    const { blogs } = await api("/api/blogs");
+    const { blogs, shop: info } = await api("/api/blogs");
     if (!blogs.length) throw new Error("ブログが見つかりません。Shopify 管理画面でブログを作成してください");
     const sel = $("blog");
     const prev = store((s) => s.getItem("blogId"));
@@ -255,10 +266,13 @@ $("connectBtn").addEventListener("click", async () => {
     for (const b of blogs) sel.add(new Option(`${b.title}（${b.handle}）`, b.id));
     if (prev && blogs.some((b) => b.id === prev)) sel.value = prev;
     setConnected(true, `接続済み（ブログ ${blogs.length} 件）`);
+    showShop(info);
     // 「本日のゆにわマート」があれば投稿先をそこに固定する
     const fixed = blogs.find((b) => b.handle === FIXED_BLOG_HANDLE);
     if (fixed) sel.value = fixed.id;
     sel.disabled = Boolean(fixed);
+    fixedBlogId = fixed?.id || null;
+    loadRecent();
     const shop = $("shop").value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
     $("connPanel").hidden = shop === HIDE_CONN_SHOP;
   } catch (err) {
@@ -270,6 +284,39 @@ $("connectBtn").addEventListener("click", async () => {
 $("blog").addEventListener("change", () => store((s) => s.setItem("blogId", $("blog").value)));
 // パラメータで接続情報がそろったら、そのまま接続する
 if (fromQuery.length && CRED_KEYS.every((k) => $(k).value)) $("connectBtn").click();
+
+// ---------- 接続先ストアの表示 ----------
+function showShop(info) {
+  $("shopName").textContent = info?.name || $("shop").value.trim();
+  $("shopLogo").hidden = !info?.logoUrl;
+  if (info?.logoUrl) { $("shopLogo").src = info.logoUrl; $("shopLogo").alt = info.name || ""; }
+  else $("shopLogo").removeAttribute("src");
+  $("shopBadge").hidden = false;
+}
+
+// ---------- 「本日のゆにわマート」の最近の記事（ヘッダーにサムネイルを並べる） ----------
+let fixedBlogId = null;
+async function loadRecent() {
+  const list = $("recent");
+  if (!fixedBlogId) { list.hidden = true; return; }
+  try {
+    const { articles } = await api("/api/recent-articles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ blogId: fixedBlogId }),
+    });
+    list.innerHTML = articles.map((a) => {
+      const src = new URL(a.imageUrl);
+      src.searchParams.set("width", "300"); // Shopify CDN で縮小版を取得
+      const label = `${a.title}${a.isPublished ? "" : "（非公開）"}`;
+      return `<li><a href="${escapeHtml(a.adminUrl)}" target="_blank" rel="noopener" title="${escapeHtml(label)}">`
+        + `<img src="${escapeHtml(src.href)}" alt="${escapeHtml(label)}" loading="lazy"></a></li>`;
+    }).join("");
+    list.hidden = !articles.length;
+  } catch {
+    list.hidden = true; // 表示用の補助情報なので、失敗しても投稿操作は妨げない
+  }
+}
 
 // ---------- 本文の文字数 ----------
 $("body").addEventListener("input", () => {
@@ -364,6 +411,7 @@ $("postForm").addEventListener("submit", async (e) => {
     $("bodyCount").textContent = "0 文字";
     $("publish").checked = false;
     setThumb(null);
+    loadRecent();
   } catch (err) {
     showResult(false, err.message);
   } finally {
