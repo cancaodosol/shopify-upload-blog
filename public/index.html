@@ -200,6 +200,19 @@ for (const k of CRED_KEYS) {
     if (connected) setConnected(false, "接続情報が変更されました。再接続してください");
   });
 }
+// GET パラメータ（?shop=...&clientId=...&clientSecret=...）があれば優先してセットし、
+// アドレスバーと履歴に残らないよう URL からは取り除く
+const params = new URLSearchParams(location.search);
+const fromQuery = CRED_KEYS.filter((k) => params.has(k));
+for (const k of fromQuery) {
+  $(k).value = params.get(k).trim();
+  store((s) => s.setItem("cred." + k, $(k).value));
+  params.delete(k);
+}
+if (fromQuery.length) {
+  const qs = params.toString();
+  history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+}
 function credHeaders() {
   return {
     "X-Shop-Domain": $("shop").value.trim(),
@@ -252,6 +265,8 @@ $("connectBtn").addEventListener("click", async () => {
   }
 });
 $("blog").addEventListener("change", () => store((s) => s.setItem("blogId", $("blog").value)));
+// パラメータで接続情報がそろったら、そのまま接続する
+if (fromQuery.length && CRED_KEYS.every((k) => $(k).value)) $("connectBtn").click();
 
 // ---------- 本文の文字数 ----------
 $("body").addEventListener("input", () => {
