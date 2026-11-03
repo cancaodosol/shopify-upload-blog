@@ -283,8 +283,8 @@ $("connectBtn").addEventListener("click", async () => {
   }
 });
 $("blog").addEventListener("change", () => store((s) => s.setItem("blogId", $("blog").value)));
-// パラメータで接続情報がそろったら、そのまま接続する
-if (fromQuery.length && CRED_KEYS.every((k) => $(k).value)) $("connectBtn").click();
+// 一時保存または GET パラメータで接続情報がそろっていれば、そのまま接続する
+if (CRED_KEYS.every((k) => $(k).value)) $("connectBtn").click();
 
 // ---------- 接続先ストアの表示 ----------
 function showShop(info) {
