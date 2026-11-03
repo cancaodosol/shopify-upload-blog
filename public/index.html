@@ -330,7 +330,7 @@ tinymce.init({
   language: "ja",
   language_url: "https://cdn.jsdelivr.net/npm/tinymce-i18n@26.9.28/langs8/ja.js",
   plugins: "link",
-  toolbar: "undo redo | bold | link",
+  toolbar: "undo redo | bold | link | linebreak",
   menubar: false,
   statusbar: false,
   height: 360,
@@ -339,7 +339,15 @@ tinymce.init({
   skin: dark ? "oxide-dark" : "oxide",
   content_css: dark ? "dark" : "default",
   content_style: "body { font-family: 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif; font-size: 15px; line-height: 1.8; }",
-  setup: (editor) => editor.on("input change undo redo SetContent", updateCount),
+  setup: (editor) => {
+    editor.on("input change undo redo SetContent", updateCount);
+    // 段落内の改行（<br>）を入れるボタン。Shift + Enter と同じ動作
+    editor.ui.registry.addButton("linebreak", {
+      text: "改行",
+      tooltip: "改行（Shift + Enter）",
+      onAction: () => editor.execCommand("InsertLineBreak"),
+    });
+  },
 });
 
 // ---------- サムネイル ----------
