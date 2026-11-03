@@ -122,7 +122,7 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
 
 <main class="wrap">
   <!-- 接続設定 -->
-  <section class="panel" aria-labelledby="conn-title">
+  <section class="panel" id="connPanel" aria-labelledby="conn-title">
     <h2 id="conn-title">接続設定 <span id="connStatus" class="status muted">未接続</span></h2>
     <div class="field">
       <label for="shop">ストアドメイン<span class="req">必須</span></label>
@@ -188,6 +188,7 @@ const $ = (id) => document.getElementById(id);
 const CRED_KEYS = ["shop", "clientId", "clientSecret"];
 const MAX_IMAGE = 20 * 1024 * 1024; // Shopify の画像ファイル上限
 const FIXED_BLOG_HANDLE = "today-uniwamart"; // 存在すれば投稿先として固定するブログ
+const HIDE_CONN_SHOP = "uniwa-mart.myshopify.com"; // このストアに接続できたら接続設定欄を隠す
 let thumbFile = null;
 let connected = false;
 
@@ -258,6 +259,8 @@ $("connectBtn").addEventListener("click", async () => {
     const fixed = blogs.find((b) => b.handle === FIXED_BLOG_HANDLE);
     if (fixed) sel.value = fixed.id;
     sel.disabled = Boolean(fixed);
+    const shop = $("shop").value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    $("connPanel").hidden = shop === HIDE_CONN_SHOP;
   } catch (err) {
     setConnected(false, err.message);
   } finally {

@@ -143,6 +143,7 @@ async function createArticle(creds, { blogId, title, body, author, isPublished, 
   if (!blogId) throw new HttpError(400, "ブログを選択してください");
   if (!title?.trim()) throw new HttpError(400, "タイトルを入力してください");
   if (!body?.trim()) throw new HttpError(400, "本文を入力してください");
+  if (!imageResourceUrl) throw new HttpError(400, "サムネイル画像を選択してください");
 
   const article = {
     blogId,
@@ -151,9 +152,7 @@ async function createArticle(creds, { blogId, title, body, author, isPublished, 
     author: { name: author?.trim() || "ゆにわマート" },
     isPublished: Boolean(isPublished),
   };
-  if (imageResourceUrl) {
-    article.image = { url: await registerImage(creds, imageResourceUrl, article.title), altText: article.title };
-  }
+  article.image = { url: await registerImage(creds, imageResourceUrl, article.title), altText: article.title };
 
   const data = await gql(
     creds,
