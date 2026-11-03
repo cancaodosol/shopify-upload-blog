@@ -152,7 +152,7 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
       <select id="blog" disabled><option value="">先に接続してください</option></select>
     </div>
     <div class="field">
-      <span class="label" id="thumbLabel">サムネイル画像</span>
+      <span class="label" id="thumbLabel">サムネイル画像<span class="req">必須</span></span>
       <div class="drop" id="drop" tabindex="0" role="button" aria-labelledby="thumbLabel">
         <img id="thumbPreview" alt="" hidden>
         <span class="drop-text" id="thumbText">クリックまたはドラッグ＆ドロップで画像を選択（JPEG / PNG / WebP / GIF）</span>
@@ -334,6 +334,7 @@ $("postForm").addEventListener("submit", async (e) => {
   const title = $("title").value.trim();
   const body = $("body").value;
   if (!connected) return showResult(false, "先に接続してください");
+  if (!thumbFile) { $("drop").focus(); return showResult(false, "サムネイル画像を選択してください"); }
   if (!title) { $("title").focus(); return showResult(false, "タイトルを入力してください"); }
   if (!body.trim()) { $("body").focus(); return showResult(false, "本文を入力してください"); }
 
@@ -342,10 +343,10 @@ $("postForm").addEventListener("submit", async (e) => {
 
   const btn = $("submitBtn");
   btn.disabled = true;
-  btn.textContent = thumbFile ? "画像をアップロード中…" : "投稿中…";
+  btn.textContent = "画像をアップロード中…";
   $("result").hidden = true;
   try {
-    const imageResourceUrl = thumbFile ? await uploadThumb(thumbFile) : null;
+    const imageResourceUrl = await uploadThumb(thumbFile);
     btn.textContent = "投稿中…";
     const { article } = await api("/api/articles", {
       method: "POST",
