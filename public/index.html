@@ -187,6 +187,7 @@ textarea { min-height: 320px; resize: vertical; line-height: 1.8; }
 const $ = (id) => document.getElementById(id);
 const CRED_KEYS = ["shop", "clientId", "clientSecret"];
 const MAX_IMAGE = 20 * 1024 * 1024; // Shopify の画像ファイル上限
+const FIXED_BLOG_HANDLE = "today-uniwamart"; // 存在すれば投稿先として固定するブログ
 let thumbFile = null;
 let connected = false;
 
@@ -240,7 +241,10 @@ $("connectBtn").addEventListener("click", async () => {
     for (const b of blogs) sel.add(new Option(`${b.title}（${b.handle}）`, b.id));
     if (prev && blogs.some((b) => b.id === prev)) sel.value = prev;
     setConnected(true, `接続済み（ブログ ${blogs.length} 件）`);
-    sel.disabled = false;
+    // 「本日のゆにわマート」があれば投稿先をそこに固定する
+    const fixed = blogs.find((b) => b.handle === FIXED_BLOG_HANDLE);
+    if (fixed) sel.value = fixed.id;
+    sel.disabled = Boolean(fixed);
   } catch (err) {
     setConnected(false, err.message);
   } finally {
